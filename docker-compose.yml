@@ -1,6 +1,10 @@
+version: "3.3" # or a different version that suits your Docker environment
+
 services:
   panel_azathoth2:
-    image: ghcr.io/erikapption/snowexplorer-fsdh:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: snow_explorer
     restart: always
     ports:
@@ -9,6 +13,11 @@ services:
       - SCORE_FILE=/data/score_snw_station_diff_alti_200_HRDPS_CaPA01_CaPA02_period_20191001_20220629.nc
       - SERIES_FILE=/data/series_snw_station_diff_alti_200_HRDPS_CaPA01_CaPA02_period_20191001_20220629.nc
     volumes:
-# FSDH Config
-#      - datahub-blob:/data
+      # FSDH Config
+      # - datahub-blob:/data
       - ./data:/data
+      - ./SnowExplorer-V5.ipynb:/SnowExplorer-V5.ipynb  
+    command: [
+      "--index=SnowExplorer-V5",
+      "SnowExplorer-V5.ipynb"
+    ]
