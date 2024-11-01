@@ -18,7 +18,7 @@ COPY --from=base /opt/conda /opt/conda
 FROM conda AS host
 
 # Create a non-root user and set ownership of the working directory
-RUN useradd -m appuser && chown -R appuser /app
+RUN useradd -m appuser
 
 # Switch to the non-root user
 USER appuser
