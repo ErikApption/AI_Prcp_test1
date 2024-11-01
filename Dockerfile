@@ -1,10 +1,37 @@
-FROM condaforge/mambaforge:latest
+# First stage: setup conda environment
+FROM condaforge/miniforge3:24.9.0-0 AS base
 
-EXPOSE 8080
+WORKDIR /app
 
-COPY environment.yml /app/environment.yml
-COPY SnowExplorer-V5.ipynb /app/SnowExplorer-V5.ipynb
+COPY environment.yml .
 
-RUN mamba env update -q -n base -f /app/environment.yml 
-#CMD ["panel", "serve", "--port", "8080", "--address", "0.0.0.0", "--num-threads", "10", "--unused-session-lifetime", "60000", "--allow-websocket-origin=\"*\"", "/app/SnowExplorer-V5.ipynb"]
-CMD ["panel", "serve", "--port", "8080", "--num-threads", "10", "--index","SnowExplorer-V5","--unused-session-lifetime", "60000", "--allow-websocket-origin=*", "/app/SnowExplorer-V5.ipynb"]
+RUN /opt/conda/bin/conda init bash && \
+    conda env create --file environment.yml && \
+    conda clean -afy && \
+    rm -rf /opt/conda/pkgs/* /tmp/* /var/tmp/*
+
+# Second stage: copy conda
+FROM base AS conda
+COPY --from=base /opt/conda /opt/conda
+
+# Third stage: final runtime image
+FROM conda AS host
+
+# Create a non-root user and set ownership of the working directory
+RUN useradd -m appuser
+
+# Switch to the non-root user
+USER appuser
+
+ENV PORT=8080
+EXPOSE $PORT
+
+# Use health check to verify service availability
+HEALTHCHECK CMD curl --fail http://localhost:$PORT || exit 1
+
+ENTRYPOINT ["python", "-m", "panel", "serve", "--port=$PORT", "--address=0.0.0.0", "--allow-websocket-origin=*"]
+
+CMD ["--num-procs=1", \
+     "--num-threads=10", \
+     "--websocket-max-message-size=100000000" \
+    ]

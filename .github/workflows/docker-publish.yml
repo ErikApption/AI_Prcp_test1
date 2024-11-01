@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       packages: write
-      
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -34,4 +34,3 @@ jobs:
 
       - name: Logout of GitHub Container Registry
         run: docker logout ghcr.io
- 
